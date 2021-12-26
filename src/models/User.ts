@@ -29,7 +29,6 @@ export class User {
   }
   get trigger() {
     return this.events.trigger;
-    d;
   }
 
   get get() {

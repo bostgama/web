@@ -2373,7 +2373,6 @@ function () {
   Object.defineProperty(User.prototype, "trigger", {
     get: function get() {
       return this.events.trigger;
-      d;
     },
     enumerable: false,
     configurable: true
