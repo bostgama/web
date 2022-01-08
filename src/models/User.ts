@@ -1,7 +1,9 @@
 import { AxiosResponse } from 'axios';
 import { Attribute } from './Attribute';
 import { Eventing } from './Eventing';
-import { Sync } from './Sync';
+import { Model } from './Model';
+import { ApiSync } from './ApiSync';
+import { Collection } from './Collection';
 
 export interface UserProps {
   id?: number;
@@ -11,54 +13,27 @@ export interface UserProps {
 
 const rooUrl = 'http://localhost:3000/users';
 
-export class User {
-  public events: Eventing = new Eventing();
-  public sync: Sync<UserProps> = new Sync<UserProps>(rooUrl);
-  public attributes: Attribute<UserProps>;
-
-  constructor(attrs: UserProps) {
-    this.attributes = new Attribute<UserProps>(attrs);
+export class User extends Model<UserProps> {
+  static buildUser(attrs: any): User {
+    return new User(
+      new Attribute<UserProps>(attrs),
+      new Eventing(),
+      new ApiSync<UserProps>(rooUrl)
+    );
   }
 
-  // on(eventName: string, callback: Callback): void {
-  //   this.events.on(eventName, callback);
-  // }
-
-  get on() {
-    return this.events.on;
-  }
-  get trigger() {
-    return this.events.trigger;
+  static buildUserCollection(): Collection<User, UserProps> {
+    return new Collection<User, UserProps>(rooUrl, (json: UserProps) =>
+      User.buildUser(json)
+    );
   }
 
-  get get() {
-    return this.attributes.get;
+  isAdminUser(): boolean {
+    return this.get('id') === 1;
   }
-  set(update: UserProps) {
-    this.attributes.set(update);
-    this.events.trigger('change');
-  }
-  fetch(): void {
-    const id = this.get('id');
 
-    if (typeof id !== 'number') {
-      throw new Error('Cannot fetch without an id');
-    }
-
-    this.sync.fetch(id).then((response: AxiosResponse): void => {
-      this.set(response.data);
-    });
-  }
-  //commets
-
-  save(): void {
-    this.sync
-      .save(this.attributes.getAll())
-      .then((response: AxiosResponse): void => {
-        this.trigger('save');
-      })
-      .catch(() => {
-        this.trigger('error');
-      });
+  setRandomAge(): void {
+    const age = Math.round(Math.random() * 100);
+    this.set({ age });
   }
 }
